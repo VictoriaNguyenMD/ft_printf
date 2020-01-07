@@ -6,22 +6,36 @@
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
 
+/*--------------------ALL FORMAT INFORMATION--------------------*/
+
+typedef struct s_formats
+{
+	int			flags; //done
+	int			width; //done
+	int			precision; //done
+	int			length;
+  int 		specifier; //done
+}				t_formats;
 
 /*------------------ENUM SPECIFIER INFORMATION------------------*/
 /*
 ** Algorithm
-** 1. Defined a struct "s_spec_char_to_int" to store the type
+** 1. Defined an enum storing the possible specifiers for printf.
+**    The enum ends with "spec_enum_size" to determine the number
+**    of enums defines since counting begins at 0.
+** 2. Defined a struct "s_spec_char_to_int" to store the type
 **    and corresponding int value determined by the enum variable
-** 2. Defined an array "spec_table" with size ammount according
+** 3. Defined an array "spec_table" with size ammount according
 **    to the number of enum variables. At each array index, there 
 **    will be a "s_spec_char_to_int" object that stores a char
 **    to later match with the printf string and a corresponding
 **    enum value.
-** 3. Defined an enum storing the possible specifiers for printf.
-**    The enum ends with "spec_enum_size" to determine the number
-**    of enums defines since counting begins at 0.
-** Expanation
-** 1. The reason why we are storing it in an array 
+** 
+** Comments
+** 1. The reason why we are using enum is to make the code more 
+**    readable; however, you do not have to use enum.
+** 2. Alternatively, we could use an array to just store the
+**    specifiers as chars.
 */
 
 typedef enum			e_spec
@@ -52,11 +66,19 @@ t_spec_char_to_int spec_table[spec_enum_size] =
 
 /*------------------ENUM FLAGS INFORMATION------------------*/
 /*
-** The reason why we are using binary is because there could be 
-** multiple flags that are valid. You want to check which ones
-** are valid
-0
-3
+** Algorithm
+** 1. Defined an enum to store the possible flags. We are using
+**    binary because multiple flags can be valid. We need to
+**    check each flag for validity and check the flags that
+**    are present.
+** 2. Defined a struct "s_flags_char_to_int" to store the flag
+**    as a char and its corresponding enum value.
+** 3. Defined an array "flags_table" to assign the char to a 
+**    specific numerical value according to the enum
+**
+** Comments
+** 1. Binary is used rather than decimal so we can use bitwise
+**    operator "or" (|) to turn on/off flags.
 */
 typedef enum			e_flags
 {
@@ -85,20 +107,49 @@ s_flags_char_to_int		flags_table[flags_enum_size] =
   {'0', zero}
 };
 
-/*------------------ALL FORMAT INFORMATION------------------*/
 
-typedef struct s_formats
+/*------------------ENUM LENGTH INFORMATION------------------*/
+/*
+** Algorithm
+** 1. Defined an enum to store the possible length types.
+**
+** Comments
+*/
+typedef enum			e_lengths
 {
-	int			flags;
-	int			width;
-	int			precision;
-	int			length;
-  int 		specifier;
-}				t_formats;
+	hh = "hh"
+  h = "h",
+  l = "l",
+  ll = "ll",
+  L = "L", 
+  lengths_enum_size = 5
+}						t_lengths;
 
+
+typedef struct	s_lengths_char_to_int
+{
+	char	lengths;
+	int   lengths_value;
+}				s_lengths_char_to_int;
+
+
+s_lengths_char_to_int		lengths_table[lengths_enum_size] =
+{
+	{"hh", hh},
+  {"h", h},
+  {"l", l},
+  {"ll", ll},
+  {"L", L}
+};
 
 /*------------------IS CERTAIN TYPE INFORMATION------------------*/
 
+/*
+** Algorithm
+** 1. Iterate through the spec_table to determine if the character
+**    matches a specifier in spec_table. If it does, assign the 
+**    associated value to the overall formats->specifier
+*/
 int is_specifier(char c, t_formats *formats)
 {
   int i = 0;
@@ -114,6 +165,9 @@ int is_specifier(char c, t_formats *formats)
   return 0;
 }
 
+/*
+** Function from libft
+*/
 int	ft_isdigit(int c)
 {
 	if (c >= '0' && c <= '9')
@@ -122,7 +176,17 @@ int	ft_isdigit(int c)
 		return (0);
 }
 
-
+/*
+** Algorithm
+** 1. formats->flags was already initalized to 0.
+** 2. Iterate through flags_table. If the flag is present
+**    present in the flags_table, then use binary OR 
+**    operator (|) to turn on the flag.
+** 
+** Return
+** 1: is a flag
+** 0: is not a flag
+*/
 int ft_isflag(char c, t_formats *formats)
 {
   int i = 0;
@@ -165,13 +229,23 @@ int	ft_atoi(const char *str)
 }
 
 /*------------------CHECKING FORMATTING------------------*/
+/* Things to Check
+** 1. Check Flags //Done
+** 2. Width //Done
+** 3. Precision
+** 4. Length
+*/
 
-//1. Check Flags
-//2. Width
-//3. Precision
-//4. Length
-
-
+/*
+** Algorithm
+** 1. Initalizes formats->flags to 0.
+** 2. Iterates through the string until the character is no
+**    longer a flag. Checks each char to see if it is a flag.
+**
+** Comments
+** 1. A int * is used because we need to increase the index
+**    of the original string index value
+*/
 void check_flags(char *str, t_formats *formats, int *i)
 {
   formats->flags = 0b00000;
@@ -179,6 +253,15 @@ void check_flags(char *str, t_formats *formats, int *i)
     (*i)++;
 }
 
+/*
+** Algorithm
+** 1. After a flags are checked, the numerical values will
+**    be extracted using ft_atoi and assigned to formats->width
+** 
+** Comments
+** 1. A int * is used because we need to increase the index
+**    of the original string index value
+*/
 void check_width(char *str, t_formats *formats, int *i)
 {
   formats->width = ft_atoi(&str[*i]);
@@ -186,10 +269,27 @@ void check_width(char *str, t_formats *formats, int *i)
     (*i)++;
 }
 
+/*
+** Algorithm
+** 1. After the width is checked, if there is not a '.',
+**    then precision is not present in the string. Indicate
+**    that precision is not applicable for the string
+** 2. If there is a '.', then increment the string and use
+**    ft_atoi to extract the number
+** 
+** Comments
+** 1. A int * is used because we need to increase the index
+**    of the original string index value
+** 2. has precision >= 0
+**    no precision < 0
+*/
+#define PREC_NA -1
 void check_precision(char *str, t_formats *formats, int *i)
 {
-  if (str[*i] == '.')
-    (*i)++;
+  if (str[*i] != '.')
+    formats->precision = PREC_NA;
+    return;
+  (*i)++;
   formats->precision = ft_atoi(&str[*i]);
   while(str[*i] && ft_isdigit(str[*i]))
     (*i)++;
@@ -205,7 +305,7 @@ int main(void) {
   t_formats formats;
   int i = 0;
   t_flags flags;
-  check_flags("+-19.42d", &formats, &i);
+  check_flags("19.42d", &formats, &i);
   // printf("%d", formats.flags);
   // check_width("+19.42d", &formats, &i);
   // check_precision("+19.42d", &formats, &i);
