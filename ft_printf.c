@@ -218,7 +218,7 @@ int	ft_isdigit(int c)
 ** 1: is a flag
 ** 0: is not a flag
 */
-int ft_isflag(char c, t_formats *formats)
+int ft_isflag(const char c, t_formats *formats)
 {
   int i = 0;
   while (i < flags_enum_size)
@@ -249,7 +249,7 @@ int ft_isflag(char c, t_formats *formats)
 **    find a single character and overlook that it is actually a double
 **    character string. 
 */
-int ft_islength(char *str, t_formats *formats)
+int ft_islength(const char *str, t_formats *formats)
 {
   int i = 0;
   while (i < lengths_enum_size)
@@ -308,7 +308,7 @@ int	ft_atoi(const char *str)
 ** 1. A int * is used because we need to increase the index
 **    of the original string index value
 */
-void check_flags(char *str, t_formats *formats, int *i)
+void check_flags(const char *str, t_formats *formats, int *i)
 {
   formats->flags = 0b00000;
   while(str[*i] && ft_isflag(str[*i], formats)) 
@@ -324,7 +324,7 @@ void check_flags(char *str, t_formats *formats, int *i)
 ** 1. A int * is used because we need to increase the index
 **    of the original string index value
 */
-void check_width(char *str, t_formats *formats, int *i)
+void check_width(const char *str, t_formats *formats, int *i)
 {
   formats->width = ft_atoi(&str[*i]);
   while(str[*i] && ft_isdigit(str[*i]))
@@ -346,7 +346,7 @@ void check_width(char *str, t_formats *formats, int *i)
 **    no precision < 0
 */
 #define PREC_NA -1
-void check_precision(char *str, t_formats *formats, int *i)
+void check_precision(const char *str, t_formats *formats, int *i)
 {
   formats->precision = PREC_NA;
   if (str[*i] != '.')
@@ -357,25 +357,32 @@ void check_precision(char *str, t_formats *formats, int *i)
     (*i)++;
 }
 
-void check_length(char *str, t_formats *formats, int *i)
+void check_length(const char *str, t_formats *formats, int *i)
 {
   formats->length = 0;
   int increment = ft_islength(&str[*i], formats); 
   *i += increment;
 }
 
-void check_specifier(char *str, t_formats *formats, int *i)
+void check_specifier(const char *str, t_formats *formats, int *i)
 {
   formats->specifier = 0;
   if (ft_isspecifier(str[*i], formats))
     (*i)++;
 }
 
-void inputting_parameters(char *str)
+void print_formatted_str(char *str, t_formats *formats)
+{
+
+}
+
+void ft_printf(const char *str, ...)
 {
   t_formats formats;
+  va_list argptr;
   int i  = 0;
 
+  va_start(argptr, str);
   while (str[i])
   {
     if (str[i] != '%')
@@ -389,13 +396,15 @@ void inputting_parameters(char *str)
       check_precision(str, &formats, &i);
       check_length(str, &formats, &i);
       check_specifier(str, &formats, &i);
+      printf("%s", va_arg(argptr, char*));
+      fflush(stdout);
     }
   }
+  va_end(argptr);
 }
 
 int main(void) {
   char *str = "Hello %s. This is %s.";
-  inputting_parameters(str);
-
+  ft_printf(str, "Joe", "Bob");
   return 0;
 }
