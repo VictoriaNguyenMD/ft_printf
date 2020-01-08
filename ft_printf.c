@@ -117,23 +117,18 @@ s_flags_char_to_int		flags_table[flags_enum_size] =
 */
 typedef enum			e_lengths
 {
-	hh = "hh"
-  h = "h",
-  l = "l",
-  ll = "ll",
-  L = "L", 
-  lengths_enum_size = 5
+	hh, h, l, ll, L, lengths_enum_size
 }						t_lengths;
 
 
-typedef struct	s_lengths_char_to_int
+typedef struct	s_lengths_str_to_int
 {
-	char	lengths;
+	char	*type;
 	int   lengths_value;
-}				s_lengths_char_to_int;
+}				s_lengths_str_to_int;
 
 
-s_lengths_char_to_int		lengths_table[lengths_enum_size] =
+s_lengths_str_to_int		lengths_table[lengths_enum_size] =
 {
 	{"hh", hh},
   {"h", h},
@@ -141,6 +136,21 @@ s_lengths_char_to_int		lengths_table[lengths_enum_size] =
   {"ll", ll},
   {"L", L}
 };
+
+/*-----------------HELPER FUNCTIONS INFORMATION-----------------*/
+
+int	ft_strcmp(const char *s1, const char *s2)
+{
+	size_t count;
+
+	count = 0;
+	while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2)
+	{
+		s1++;
+		s2++;
+	}
+	return ((unsigned char)*s1 - (unsigned char)*s2);
+}
 
 /*------------------IS CERTAIN TYPE INFORMATION------------------*/
 
@@ -200,6 +210,27 @@ int ft_isflag(char c, t_formats *formats)
     i++;
   }
   return (0);
+}
+
+/*
+** Algorithm
+** 1. Iterate through the lenghts_table to determine if the string
+**    matches a length type in lenghts_table. If it does, assign the 
+**    associated value to the overall formats->lengths
+*/
+int ft_islength(char *c, t_formats *formats)
+{
+  int i = 0;
+  while (i < lengths_enum_size)
+  {
+    if (ft_strcmp(lengths_table[i].type, c) == 0)
+    {
+      formats->length = lengths_table[i].lengths_value;
+      return 1;
+    }
+    i++;
+  }
+  return 0;
 }
 
 /*------------------CONVERSION------------------*/
@@ -287,8 +318,10 @@ void check_width(char *str, t_formats *formats, int *i)
 void check_precision(char *str, t_formats *formats, int *i)
 {
   if (str[*i] != '.')
+  {
     formats->precision = PREC_NA;
     return;
+  }
   (*i)++;
   formats->precision = ft_atoi(&str[*i]);
   while(str[*i] && ft_isdigit(str[*i]))
@@ -297,20 +330,21 @@ void check_precision(char *str, t_formats *formats, int *i)
 
 void check_length(char *str, t_formats *formats, int *i)
 {
-  //pass
+  formats->length = 0;
+  while(str[*i] && ft_islength(&str[*i], formats)) 
+    (*i)++;
 }
 
 int main(void) {
-  char *str = "Hello %+3.42hhd Joe";
   t_formats formats;
   int i = 0;
   t_flags flags;
-  check_flags("19.42d", &formats, &i);
-  // printf("%d", formats.flags);
-  // check_width("+19.42d", &formats, &i);
-  // check_precision("+19.42d", &formats, &i);
-  // printf("%d\n", i);
-  // printf("%d", formats.precision);
+  char *str = "+19.42hd";
+  check_flags(str, &formats, &i);
+  check_width(str, &formats, &i);
+  check_precision(str, &formats, &i);
+  check_length(str, &formats, &i);
+  printf("%d\n", formats.length);
   // printf("%d\n", is_specifier('s', &formats));
   // printf("%d", formats.specifier);
 
