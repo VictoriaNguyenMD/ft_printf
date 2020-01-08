@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
@@ -180,7 +181,7 @@ size_t	ft_strlen(const char *s)
 **    matches a specifier in spec_table. If it does, assign the 
 **    associated value to the overall formats->specifier
 */
-int is_specifier(char c, t_formats *formats)
+int ft_isspecifier(char c, t_formats *formats)
 {
   int i = 0;
   while (i < spec_enum_size)
@@ -291,8 +292,8 @@ int	ft_atoi(const char *str)
 
 /*------------------CHECKING FORMATTING------------------*/
 /* Things to Check
-** 1. Check Flags //Done
-** 2. Width //Done
+** 1. Check Flags
+** 2. Width
 ** 3. Precision
 ** 4. Length
 */
@@ -347,11 +348,9 @@ void check_width(char *str, t_formats *formats, int *i)
 #define PREC_NA -1
 void check_precision(char *str, t_formats *formats, int *i)
 {
+  formats->precision = PREC_NA;
   if (str[*i] != '.')
-  {
-    formats->precision = PREC_NA;
     return;
-  }
   (*i)++;
   formats->precision = ft_atoi(&str[*i]);
   while(str[*i] && ft_isdigit(str[*i]))
@@ -365,26 +364,38 @@ void check_length(char *str, t_formats *formats, int *i)
   *i += increment;
 }
 
-// void inputting_parameters()
-// {
-//   check_flags(str, &formats, &i);
-//   check_width(str, &formats, &i);
-//   check_precision(str, &formats, &i);
-//   check_length(str, &formats, &i);
-// }
+void check_specifier(char *str, t_formats *formats, int *i)
+{
+  formats->specifier = 0;
+  if (ft_isspecifier(str[*i], formats))
+    (*i)++;
+}
+
+void inputting_parameters(char *str)
+{
+  t_formats formats;
+  int i  = 0;
+
+  while (str[i])
+  {
+    if (str[i] != '%')
+    {
+      write (1, &str[i], 1);
+      i++;
+    } else {
+      i++;
+      check_flags(str, &formats, &i);
+      check_width(str, &formats, &i);
+      check_precision(str, &formats, &i);
+      check_length(str, &formats, &i);
+      check_specifier(str, &formats, &i);
+    }
+  }
+}
 
 int main(void) {
-  t_formats formats;
-  int i = 0;
-  t_flags flags;
-  char *str = "+19.42Ld";
-  check_flags(str, &formats, &i);
-  check_width(str, &formats, &i);
-  check_precision(str, &formats, &i);
-  check_length(str, &formats, &i);
-  printf("%d\n", formats.length);
-  // printf("%d\n", is_specifier('s', &formats));
-  // printf("%d", formats.specifier);
+  char *str = "Hello %s. This is %s.";
+  inputting_parameters(str);
 
   return 0;
 }
