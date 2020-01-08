@@ -114,10 +114,14 @@ s_flags_char_to_int		flags_table[flags_enum_size] =
 ** 1. Defined an enum to store the possible length types.
 **
 ** Comments
+** 1. It is important to check for double chars first (eg. hh)
+**    prior to single chars because we will be using strncmp.
+**    As a result, we will check to see if there are "hh"
+**    before "h" to ensure
 */
 typedef enum			e_lengths
 {
-	hh, h, l, ll, L, lengths_enum_size
+	hh, h, ll, l, L, lengths_enum_size
 }						t_lengths;
 
 
@@ -132,26 +136,42 @@ s_lengths_str_to_int		lengths_table[lengths_enum_size] =
 {
 	{"hh", hh},
   {"h", h},
-  {"l", l},
   {"ll", ll},
+  {"l", l},
   {"L", L}
 };
 
 /*-----------------HELPER FUNCTIONS INFORMATION-----------------*/
 
-int	ft_strcmp(const char *s1, const char *s2)
+int	ft_strncmp(const char *s1, const char *s2, size_t n)
 {
-	size_t count;
+  size_t	count;
+	int		diff;
 
-	count = 0;
-	while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2)
+	count = 1;
+	if (n == 0)
+		return (0);
+	while (*s1 != '\0' && *s2 != '\0' && *s1 == *s2 && count++ < n)
 	{
 		s1++;
 		s2++;
 	}
-	return ((unsigned char)*s1 - (unsigned char)*s2);
+	diff = ((unsigned char)*s1 - (unsigned char)*s2);
+	return (diff);
 }
 
+size_t	ft_strlen(const char *s)
+{
+	size_t i;
+
+	i = 0;
+	while (*s)
+	{
+		i++;
+		s++;
+	}
+	return (i);
+}
 /*------------------IS CERTAIN TYPE INFORMATION------------------*/
 
 /*
@@ -214,19 +234,29 @@ int ft_isflag(char c, t_formats *formats)
 
 /*
 ** Algorithm
-** 1. Iterate through the lenghts_table to determine if the string
-**    matches a length type in lenghts_table. If it does, assign the 
-**    associated value to the overall formats->lengths
+** 1. Iterate through the lengths_table to determine if the string
+**    matches a length type in lengths_table. Because we are looking 
+**    for a string rather than a char, we are using ft_strncmp to determine 
+**    how many character in the string that we are looking at. If there
+**    is a match, then assign the associated value to the overall 
+**    formats->lengths.
+**
+** Comments
+** 1. For example, if "ll" is being looked at, we will see if the next 
+**    two characters in the string is "ll". It is important to look at
+**    double characters before single characters (eg. "l") else you may 
+**    find a single character and overlook that it is actually a double
+**    character string. 
 */
-int ft_islength(char *c, t_formats *formats)
+int ft_islength(char *str, t_formats *formats)
 {
   int i = 0;
   while (i < lengths_enum_size)
   {
-    if (ft_strcmp(lengths_table[i].type, c) == 0)
+    if (ft_strncmp(lengths_table[i].type, str, ft_strlen(lengths_table[i].type)) == 0)
     {
       formats->length = lengths_table[i].lengths_value;
-      return 1;
+      return ft_strlen(lengths_table[i].type);
     }
     i++;
   }
@@ -331,15 +361,23 @@ void check_precision(char *str, t_formats *formats, int *i)
 void check_length(char *str, t_formats *formats, int *i)
 {
   formats->length = 0;
-  while(str[*i] && ft_islength(&str[*i], formats)) 
-    (*i)++;
+  int increment = ft_islength(&str[*i], formats); 
+  *i += increment;
 }
+
+// void inputting_parameters()
+// {
+//   check_flags(str, &formats, &i);
+//   check_width(str, &formats, &i);
+//   check_precision(str, &formats, &i);
+//   check_length(str, &formats, &i);
+// }
 
 int main(void) {
   t_formats formats;
   int i = 0;
   t_flags flags;
-  char *str = "+19.42hd";
+  char *str = "+19.42Ld";
   check_flags(str, &formats, &i);
   check_width(str, &formats, &i);
   check_precision(str, &formats, &i);
