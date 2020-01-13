@@ -41,28 +41,29 @@ typedef struct s_formats
 
 typedef enum			e_spec
 {
-	d, i, u, o, x, X, f, c, s, p, perc, spec_enum_size
+	d, i, u, o, x, X, c, s, f, p, perc, spec_enum_size
 }						t_spec;
 
 typedef struct	s_spec_char_to_int
 {
 	char	type;
-	int		spec_value;
+	char	spec_value;
+  int   size;
 }				t_spec_char_to_int;
 
 t_spec_char_to_int spec_table[spec_enum_size] = 
 {
-	{'d', d},
-	{'i', i},
-	{'u', u},
-	{'o', o},
-	{'x', x},
-	{'X', X},
-	{'f', f},
-	{'c', c},
-	{'s', s},
-	{'p', p},
-  {'%', perc}
+	{'d', d, 32},
+	{'i', i, 32},
+	{'u', u, 32},
+	{'o', o, 32},
+	{'x', x, 32},
+	{'X', X, 32},
+	{'c', c, 32}, //promoted to int
+	{'s', s, 64}, //to print out, va_arg takes in int64_t.
+  {'f', f, 64}, //promoted to double
+	{'p', p, 64}, //to print out, va_arg takes in int64_t, then print_hex --> int64_t
+  {'%', perc, 8} //****FIGURE OUT WHAT TO DO WITH THIS LATER****
 };
 
 /*------------------ENUM FLAGS INFORMATION------------------*/
@@ -130,16 +131,17 @@ typedef struct	s_lengths_str_to_int
 {
 	char	*type;
 	int   lengths_value;
+  int   size;
 }				s_lengths_str_to_int;
 
 
 s_lengths_str_to_int		lengths_table[lengths_enum_size] =
 {
-	{"hh", hh},
-  {"h", h},
-  {"ll", ll},
-  {"l", l},
-  {"L", L}
+	{"hh", hh, 8},
+  {"h", h, 16},
+  {"ll", ll, 64},
+  {"l", l, 64},
+  {"L", L, 128} //If Lf, will take in as a long double
 };
 
 /*-----------------HELPER FUNCTIONS INFORMATION-----------------*/
@@ -188,7 +190,7 @@ int ft_isspecifier(char c, t_formats *formats)
   {
     if (spec_table[i].type == c)
     {
-      formats->specifier = spec_table[i].spec_value;
+      formats->specifier = spec_table[i].size;
       return 1;
     }
     i++;
@@ -371,15 +373,54 @@ void check_specifier(const char *str, t_formats *formats, int *i)
     (*i)++;
 }
 
-void print_formatted_str(char *str, t_formats *formats)
+/*------------------HANDLING FORMATTING------------------*/
+
+void handle_flags(char *str, t_formats format)
 {
 
 }
+
+void *handle_width(char *str, t_formats format)
+{
+  
+}
+
+void *handle_precision(char *str, t_formats format)
+{
+  
+}
+
+void *handle_length(char *str, t_formats format)
+{
+  
+}
+
+/*------------------HANDLING ARGUMENTS------------------*/
+
+char *format_arg(long double input, t_formats format)
+{
+  char *str = "";
+
+  return str;
+}
+
+void print_formatted_arg(char *str)
+{
+  int i = 0;
+  while (str[i])
+  {
+    write(1, str[i], 1);
+    i++;
+  }
+}
+
+/*------------------MAIN FT_PRINTF FUNCTION------------------*/
 
 void ft_printf(const char *str, ...)
 {
   t_formats formats;
   va_list argptr;
+  char *formatted_arg;
   int i  = 0;
 
   va_start(argptr, str);
@@ -396,8 +437,9 @@ void ft_printf(const char *str, ...)
       check_precision(str, &formats, &i);
       check_length(str, &formats, &i);
       check_specifier(str, &formats, &i);
-      printf("%s", va_arg(argptr, char*));
-      fflush(stdout);
+      // retrieve_arg(&argptr, formats)
+      // formatted_arg = format_arg(va_args(argptr, , formats);
+      print_formatted_str(formatted_arg);
     }
   }
   va_end(argptr);
