@@ -11,11 +11,12 @@
 
 typedef struct s_formats
 {
-	int			flags; //done
-	int			width; //done
-	int			precision; //done
+	int			flags;
+	int			width;
+	int			precision;
 	int			length;
-  int 		specifier; //done
+  int 		specifier;
+  int     base;
 }				t_formats;
 
 /*------------------ENUM SPECIFIER INFORMATION------------------*/
@@ -371,6 +372,16 @@ void check_specifier(const char *str, t_formats *formats, int *i)
   formats->specifier = 0;
   if (ft_isspecifier(str[*i], formats))
     (*i)++;
+  check_base(formats);
+}
+
+void check_base(t_formats *formats)
+{
+  formats->base = 10;
+  if (formats->flags == o)
+    formats->base = 8;
+  else if (formats->flags == x || formats->flags == X || formats->flags == p)
+    formats->base = 16;
 }
 
 /*------------------HANDLING FORMATTING------------------*/
