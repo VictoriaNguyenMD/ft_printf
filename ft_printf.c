@@ -184,22 +184,40 @@ void	ft_putchar(char c)
 	write(1, &c, 1);
 }
 
-void print_hex(intmax_t nbr, t_formats *formats)
+void print_unsigned_helper(uintmax_t nbr, t_formats *formats)
 {
-  if (nbr >= 16)
-    print_hex(nbr / 16, formats);
-  if (nbr % 16 < 10)
-    ft_putchar((nbr % 16) + '0');
-  else
+  if (nbr >= formats->base)
+    print_unsigned_helper(nbr / formats->base, formats);
+  if (formats->base == 8 || formats->base == 10)
+    ft_putchar((char)(nbr % formats->base) + '0');
+  else if (formats->base == 16)
   {
-    if (formats->specifier == x)
-      ft_putchar((nbr % 16) - 10 + 'a');
-    else if (formats->specifier == X);
-      ft_putchar((nbr % 16) - 10 + 'A');
+    if (nbr % 16 < 10)
+      ft_putchar((nbr % 16) + '0');
+    else
+    {
+      if (formats->specifier == x)
+        ft_putchar((nbr % 16) - 10 + 'a');
+      else if (formats->specifier == X);
+        ft_putchar((nbr % 16) - 10 + 'A');
+    }
   }
 }
 
-int	ft_nbrlen(int num)
+void print_signed_helper(intmax_t nbr, t_formats *formats)
+{
+  if (nbr < 0)
+  {
+    ft_putchar('-');
+    nbr *= -1;
+  }
+  if (nbr >= formats->base)
+    print_signed_helper(nbr / formats->base, formats);
+  ft_putchar((nbr % formats->base) + '0');
+}
+
+
+int	ft_nbrlen(intmax_t num)
 {
 	int count;
 
@@ -219,7 +237,7 @@ void	*ft_memalloc(size_t size)
 	unsigned char	*output;
 	size_t			i;
 
-	if (!size || size >= ULONG_MAX)
+	if (!size || size >= SIZE_MAX)
 		return (NULL);
 	output = (unsigned char*)malloc((size));
 	i = 0;
@@ -236,7 +254,7 @@ void	*ft_memalloc(size_t size)
 	return (output);
 }
 
-char		*ft_itoa(int n)
+char		*ft_itoa(intmax_t n)
 {
 	char	*str;
 	int		nlen;
@@ -532,12 +550,13 @@ print_functions *print_functs[10] = {
   print_signed, //d,i --> Within this, check for length modifiers & hh,h,l,ll
   print_unsigned, //u,o,x,X --> check for length modifiers & hh,h,l,ll
   print_float, //f --> check for length modifiers L
+  print_char,
   print_string,
   print_pointer
 };
 
 /*-------------------PRINTING FUNCTIONS----------------------*/
-void print_signed (t_formats *formats, va_list *argptr)
+void print_signed(t_formats *formats, va_list *argptr)
 {
   intmax_t nbr;
   nbr = va_arg(*argptr, intmax_t);
@@ -552,12 +571,13 @@ void print_signed (t_formats *formats, va_list *argptr)
     else if (formats->length == ll)
       nbr = (long long int) nbr;
   }
+  print_signed_helper(nbr, formats);
 }
 
-void print_unsigned (t_formats *formats, va_list *argptr)
+void print_unsigned(t_formats *formats, va_list *argptr)
 {
-  intmax_t nbr;
-  nbr = va_arg(*argptr, intmax_t);
+  uintmax_t nbr;
+  nbr = va_arg(*argptr, uintmax_t);
   if (formats->specifier == d || formats->specifier == i)
   {
     if (formats->length == hh)
@@ -569,15 +589,16 @@ void print_unsigned (t_formats *formats, va_list *argptr)
     else if (formats->length == ll)
       nbr = (long long unsigned int) nbr;
   }
+  print_unsigned_helper(nbr, formats);
 }
 
-void print_float (t_formats *formats, va_list *argptr)
+void print_float(t_formats *formats, va_list *argptr)
 {
   double nbr;
   nbr = va_arg(*argptr, double);
   nbr = (float)nbr;
 
-  char* characteristic = ft_itoa((int)nbr);
+  char* characteristic = ft_itoa((intmax_t)nbr);
   int mult = 1;
   int digit = 6;
   while (digit > 0)
@@ -585,13 +606,18 @@ void print_float (t_formats *formats, va_list *argptr)
     mult = mult * 10;
     digit--;
   }
-  char *mantissa = ft_itoa(((int)(nbr * (float)mult)) % mult);
+  char *mantissa = ft_itoa(((intmax_t)(nbr * (float)mult)) % mult);
   write(1, characteristic, ft_strlen(characteristic));
   write(1, ".", 1);
   write(1, mantissa, ft_strlen(mantissa));  
 }
 
-void print_string (t_formats *formats, va_list *argptr)
+void print_char(t_formats *formats, va_list *argptr)
+{
+  ft_putchar(va_arg(*argptr, char));
+}
+
+void print_string(t_formats *formats, va_list *argptr)
 {
   char *str;
   str = va_arg(*argptr, char *);
