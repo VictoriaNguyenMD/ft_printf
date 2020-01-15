@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <limits.h>
 
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
@@ -176,6 +178,104 @@ size_t	ft_strlen(const char *s)
 	}
 	return (i);
 }
+
+void	ft_putchar(char c)
+{
+	write(1, &c, 1);
+}
+
+void print_hex(intmax_t nbr, t_formats *formats)
+{
+  if (nbr >= 16)
+    print_hex(nbr / 16, formats);
+  if (nbr % 16 < 10)
+    ft_putchar((nbr % 16) + '0');
+  else
+  {
+    if (formats->specifier == x)
+      ft_putchar((nbr % 16) - 10 + 'a');
+    else if (formats->specifier == X);
+      ft_putchar((nbr % 16) - 10 + 'A');
+  }
+}
+
+int	ft_nbrlen(int num)
+{
+	int count;
+
+	count = 0;
+	if (num == 0)
+		return (1);
+	while (num != 0)
+	{
+		count++;
+		num /= 10;
+	}
+	return (count);
+}
+
+void	*ft_memalloc(size_t size)
+{
+	unsigned char	*output;
+	size_t			i;
+
+	if (!size || size >= ULONG_MAX)
+		return (NULL);
+	output = (unsigned char*)malloc((size));
+	i = 0;
+	if (!output)
+		return (NULL);
+	else
+	{
+		while (i < (size))
+		{
+			output[i] = 0;
+			i++;
+		}
+	}
+	return (output);
+}
+
+char		*ft_itoa(int n)
+{
+	char	*str;
+	int		nlen;
+	long	ln;
+
+	ln = (long)n;
+	nlen = ft_nbrlen(n);
+	if (n < 0)
+	{
+		nlen++;
+		ln *= -1;
+	}
+	str = ft_memalloc((nlen + 1) * sizeof(char));
+	if (!str)
+		return (NULL);
+	str[nlen] = '\0';
+	while (nlen-- >= 1)
+	{
+		str[nlen] = (ln % 10) + '0';
+		ln /= 10;
+	}
+	if (n < 0)
+		str[0] = '-';
+	return (str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t i;
+
+	i = 0;
+	while (*s)
+	{
+		i++;
+		s++;
+	}
+	return (i);
+}
+
 /*------------------IS CERTAIN TYPE INFORMATION------------------*/
 
 /*
@@ -299,6 +399,7 @@ int	ft_atoi(const char *str)
 ** 2. Width
 ** 3. Precision
 ** 4. Length
+** 5. Base
 */
 
 /*
@@ -386,43 +487,128 @@ void check_base(t_formats *formats)
 
 /*------------------HANDLING FORMATTING------------------*/
 
-void handle_flags(char *str, t_formats format)
-{
+// void handle_flags(char *str, t_formats format)
+// {
 
-}
+// }
 
-void *handle_width(char *str, t_formats format)
-{
+// void *handle_width(char *str, t_formats format)
   
-}
+// }
 
-void *handle_precision(char *str, t_formats format)
-{
+// void *handle_precision(char *str, t_formats format)
+// {
   
-}
+// }
 
-void *handle_length(char *str, t_formats format)
-{
+// void *handle_length(char *str, t_formats format)
+// {
   
-}
+// }
 
 /*------------------HANDLING ARGUMENTS------------------*/
 
-char *format_arg(long double input, t_formats format)
-{
-  char *str = "";
+// char *format_arg(long double input, t_formats format)
+// {
+//   char *str = "";
 
-  return str;
+//   return str;
+// }
+
+// void print_formatted_arg(char *str)
+// {
+//   int i = 0;
+//   while (str[i])
+//   {
+//     write(1, str[i], 1);
+//     i++;
+//   }
+// }
+
+/*-------------------------DISPATCH--------------------------*/
+typedef void print_functions(t_formats *formats, va_list *argptr);
+
+print_functions *print_functs[10] = {
+  print_signed, //d,i --> Within this, check for length modifiers & hh,h,l,ll
+  print_unsigned, //u,o,x,X --> check for length modifiers & hh,h,l,ll
+  print_float, //f --> check for length modifiers L
+  print_string,
+  print_pointer
+};
+
+/*-------------------PRINTING FUNCTIONS----------------------*/
+void print_signed (t_formats *formats, va_list *argptr)
+{
+  intmax_t nbr;
+  nbr = va_arg(*argptr, intmax_t);
+  if (formats->specifier == d || formats->specifier == i)
+  {
+    if (formats->length == hh)
+      nbr = (signed char)nbr;
+    else if (formats->length == h)
+      nbr = (short int) nbr;
+    else if (formats->length == l)
+      nbr = (long int) nbr;
+    else if (formats->length == ll)
+      nbr = (long long int) nbr;
+  }
 }
 
-void print_formatted_arg(char *str)
+void print_unsigned (t_formats *formats, va_list *argptr)
 {
+  intmax_t nbr;
+  nbr = va_arg(*argptr, intmax_t);
+  if (formats->specifier == d || formats->specifier == i)
+  {
+    if (formats->length == hh)
+      nbr = (unsigned char)nbr;
+    else if (formats->length == h)
+      nbr = (short unsigned int) nbr;
+    else if (formats->length == l)
+      nbr = (long unsigned int) nbr;
+    else if (formats->length == ll)
+      nbr = (long long unsigned int) nbr;
+  }
+}
+
+void print_float (t_formats *formats, va_list *argptr)
+{
+  double nbr;
+  nbr = va_arg(*argptr, double);
+  nbr = (float)nbr;
+
+  char* characteristic = ft_itoa((int)nbr);
+  int mult = 1;
+  int digit = 6;
+  while (digit > 0)
+  {
+    mult = mult * 10;
+    digit--;
+  }
+  char *mantissa = ft_itoa(((int)(nbr * (float)mult)) % mult);
+  write(1, characteristic, ft_strlen(characteristic));
+  write(1, ".", 1);
+  write(1, mantissa, ft_strlen(mantissa));  
+}
+
+void print_string (t_formats *formats, va_list *argptr)
+{
+  char *str;
+  str = va_arg(*argptr, char *);
   int i = 0;
   while (str[i])
   {
-    write(1, str[i], 1);
+    ft_putchar(str[i]);
     i++;
   }
+}
+
+void print_pointer (t_formats *formats, va_list *argptr)
+{
+  intmax_t nbr;
+  nbr = va_arg(*argptr, intmax_t);
+  write (1, "0x", 2);
+  print_hex(nbr, formats);
 }
 
 /*------------------MAIN FT_PRINTF FUNCTION------------------*/
@@ -431,7 +617,6 @@ void ft_printf(const char *str, ...)
 {
   t_formats formats;
   va_list argptr;
-  char *formatted_arg;
   int i  = 0;
 
   va_start(argptr, str);
@@ -440,7 +625,7 @@ void ft_printf(const char *str, ...)
     if (str[i] != '%')
     {
       write (1, &str[i], 1);
-      i++;
+      i++;     
     } else {
       i++;
       check_flags(str, &formats, &i);
@@ -448,9 +633,7 @@ void ft_printf(const char *str, ...)
       check_precision(str, &formats, &i);
       check_length(str, &formats, &i);
       check_specifier(str, &formats, &i);
-      // retrieve_arg(&argptr, formats)
-      // formatted_arg = format_arg(va_args(argptr, , formats);
-      print_formatted_str(formatted_arg);
+      dispatch_functs(&formats, &argptr);
     }
   }
   va_end(argptr);
