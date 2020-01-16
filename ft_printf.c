@@ -294,6 +294,11 @@ size_t	ft_strlen(const char *s)
 	return (i);
 }
 
+void print_long_double_helper(long double nbr, t_formats *formats)
+{
+  
+}
+
 /*------------------IS CERTAIN TYPE INFORMATION------------------*/
 
 /*
@@ -533,15 +538,21 @@ void check_base(t_formats *formats)
 //   return str;
 // }
 
-// void print_formatted_arg(char *str)
-// {
-//   int i = 0;
-//   while (str[i])
-//   {
-//     write(1, str[i], 1);
-//     i++;
-//   }
-// }
+void print_arg(t_formats *formats, va_list *argptr)
+{
+  if (formats->specifier == d || formats->specifier == i)
+    print_signed(formats, argptr);
+  else if (formats->specifier == u || formats->specifier == o || formats->specifier == x || formats->specifier == X)
+    print_unsigned(formats, argptr);
+  else if (formats->specifier == f)
+    print_float(formats, argptr);
+  else if (formats->specifier == c)
+    print_char(formats, argptr);
+  else if (formats->specifier == s)
+    print_string(formats, argptr);
+  else if (formats->specifier == p)
+    print_string(formats, argptr);
+}
 
 /*-------------------------DISPATCH--------------------------*/
 typedef void print_functions(t_formats *formats, va_list *argptr);
@@ -594,6 +605,12 @@ void print_unsigned(t_formats *formats, va_list *argptr)
 
 void print_float(t_formats *formats, va_list *argptr)
 {
+  if (formats->length == L)
+  {
+    long double nbr = va_arg(*argptr, long double);
+    print_long_double_helper(nbr, formats);
+    return ;
+  }
   double nbr;
   nbr = va_arg(*argptr, double);
   nbr = (float)nbr;
@@ -629,12 +646,12 @@ void print_string(t_formats *formats, va_list *argptr)
   }
 }
 
-void print_pointer (t_formats *formats, va_list *argptr)
+void print_pointer(t_formats *formats, va_list *argptr)
 {
   intmax_t nbr;
   nbr = va_arg(*argptr, intmax_t);
   write (1, "0x", 2);
-  print_hex(nbr, formats);
+  print_unsigned_helper(nbr, formats);
 }
 
 /*------------------MAIN FT_PRINTF FUNCTION------------------*/
