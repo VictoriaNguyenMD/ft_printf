@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <limits.h>
-
+/*1*/
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
 
