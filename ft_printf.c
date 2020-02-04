@@ -7,6 +7,7 @@
 #include <limits.h>
 /*1*/
 /*2*/
+/*3*/
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
 
