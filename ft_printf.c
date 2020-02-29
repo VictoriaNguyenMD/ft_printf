@@ -10,6 +10,7 @@
 /*3*/
 /*4*/
 /*5*/
+/*6*/
 /*-----------------------FORMAT PROTOTYPE-----------------------*/
 /* %[flags][width][.precision][length]specifier */
 
